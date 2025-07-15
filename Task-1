@@ -1,0 +1,64 @@
+#etl_pipeline.py (Python Script)
+
+import pandas as pd
+from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import Pipeline
+import os
+
+# -------- CONFIGURATION --------
+INPUT_PATH = 'raw_data.csv'     # Replace with your input file
+OUTPUT_PATH = 'clean_data.csv'  # Processed output
+
+# -------- ETL PIPELINE --------
+def run_etl_pipeline(input_path, output_path):
+    # Load Data
+    df = pd.read_csv(input_path)
+    print(f"Loaded data with shape: {df.shape}")
+
+    # Identify feature types
+    categorical_cols = df.select_dtypes(include=['object', 'category']).columns.tolist()
+    numerical_cols = df.select_dtypes(include=['int64', 'float64']).columns.tolist()
+
+    print(f"Categorical columns: {categorical_cols}")
+    print(f"Numerical columns: {numerical_cols}")
+
+    # Create transformers
+    numeric_transformer = Pipeline(steps=[
+        ('imputer', SimpleImputer(strategy='mean')),
+        ('scaler', StandardScaler())
+    ])
+
+    categorical_transformer = Pipeline(steps=[
+        ('imputer', SimpleImputer(strategy='most_frequent')),
+        ('encoder', OneHotEncoder(handle_unknown='ignore', sparse=False))
+    ])
+
+    # Combine transformers
+    preprocessor = ColumnTransformer(
+        transformers=[
+            ('num', numeric_transformer, numerical_cols),
+            ('cat', categorical_transformer, categorical_cols)
+        ]
+    )
+
+    # Apply transformations
+    processed_data = preprocessor.fit_transform(df)
+
+    # Get column names after encoding
+    cat_features = preprocessor.named_transformers_['cat']['encoder'].get_feature_names_out(categorical_cols)
+    all_columns = numerical_cols + list(cat_features)
+
+    # Save the processed data
+    processed_df = pd.DataFrame(processed_data, columns=all_columns)
+    processed_df.to_csv(output_path, index=False)
+    print(f"Saved clean data to: {output_path}")
+
+# -------- MAIN RUN --------
+if __name__ == "__main__":
+    if not os.path.exists(INPUT_PATH):
+        print(f"Error: Input file '{INPUT_PATH}' not found.")
+    else:
+        run_etl_pipeline(INPUT_PATH, OUTPUT_PATH)
+
