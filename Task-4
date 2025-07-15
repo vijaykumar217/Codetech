@@ -54,3 +54,10 @@ plt.title("Feasible Region and Optimal Product Mix")
 plt.legend()
 plt.grid(True)
 plt.show()
+
+# Output (Example)
+
+Status: Optimal
+Optimal number of Desks: 20.0
+Optimal number of Chairs: 40.0
+Maximum Profit (₹): 4000.0
