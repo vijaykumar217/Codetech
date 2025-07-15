@@ -1,3 +1,56 @@
 # Business Problem: Product Mix Optimization
 
+
 # Code: optimization_product_mix.ipynb
+
+import pulp
+import matplotlib.pyplot as plt
+
+#  Initialize LP Problem
+model = pulp.LpProblem("Product_Mix_Optimization", pulp.LpMaximize)
+
+#  Define Decision Variables
+desks = pulp.LpVariable("Desks", lowBound=0, cat='Integer')
+chairs = pulp.LpVariable("Chairs", lowBound=0, cat='Integer')
+
+#  Define Objective Function (Maximize Profit)
+model += 100 * desks + 50 * chairs, "Total_Profit"
+
+#  Define Constraints
+model += 8 * desks + 4 * chairs <= 400, "LaborConstraint"
+model += 5 * desks + 3 * chairs <= 300, "WoodConstraint"
+
+#  Solve the Model
+model.solve()
+
+#  Output Results
+print("Status:", pulp.LpStatus[model.status])
+print("Optimal number of Desks:", pulp.value(desks))
+print("Optimal number of Chairs:", pulp.value(chairs))
+print("Maximum Profit (₹):", pulp.value(model.objective))
+
+#  Visualize Feasible Region and Optimal Solution
+import numpy as np
+
+x = np.linspace(0, 100, 200)
+labor_line = (400 - 8*x)/4
+wood_line = (300 - 5*x)/3
+
+plt.figure(figsize=(8,6))
+plt.plot(x, labor_line, label='Labor Constraint', color='blue')
+plt.plot(x, wood_line, label='Wood Constraint', color='green')
+plt.xlim((0,50))
+plt.ylim((0,100))
+
+# Feasible Region Fill
+plt.fill_between(x, np.minimum(labor_line, wood_line), color='gray', alpha=0.3)
+
+# Optimal Point
+plt.plot(pulp.value(desks), pulp.value(chairs), 'ro', label='Optimal Solution')
+
+plt.xlabel("Desks")
+plt.ylabel("Chairs")
+plt.title("Feasible Region and Optimal Product Mix")
+plt.legend()
+plt.grid(True)
+plt.show()
