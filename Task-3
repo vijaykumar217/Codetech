@@ -29,3 +29,47 @@ pipeline.fit(X_train, y_train)
 #  Save model
 joblib.dump(pipeline, 'house_price_model.pkl')
 print("Model saved as house_price_model.pkl")
+
+
+# app.py – Flask API for Model Deployment
+
+from flask import Flask, request, jsonify
+import joblib
+import numpy as np
+
+# Load the model
+model = joblib.load("house_price_model.pkl")
+
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return "🏠 House Price Prediction API is running!"
+
+@app.route('/predict', methods=['POST'])
+def predict():
+    try:
+        data = request.get_json(force=True)
+        features = np.array(data["features"]).reshape(1, -1)
+        prediction = model.predict(features)[0]
+        return jsonify({"predicted_price": round(prediction, 2)})
+    except Exception as e:
+        return jsonify({"error": str(e)})
+
+if __name__ == '__main__':
+    app.run(debug=True)
+
+
+# curl or Postman Example (for testing)
+
+curl -X POST http://127.0.0.1:5000/predict \
+     -H "Content-Type: application/json" \
+     -d '{"features": [0.00632, 18.0, 2.31, 0.0, 0.538, 6.575,
+                       65.2, 4.09, 1.0, 296.0, 15.3, 396.9, 4.98]}'
+
+
+# Output
+
+{
+  "predicted_price": 24.03
+}
